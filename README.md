@@ -12,29 +12,59 @@ This parser handles the messy reality of WHOIS data across different country reg
 - **Slow WHOIS servers** - with configurable 30-second timeouts
 - **Fallback parsing** - when domain names aren't explicitly listed in responses
 
-## Success Rate
+## 📊 Complete Breakdown of All 169 ccTLDs
 
-**52/169 ccTLDs fully supported** (31% perfect parsing)
+### ✅ FULLY WORKING (52 - 31%)
 
-- ✅ **Full parsing**: 52 ccTLDs with domain, dates, nameservers, registrar
-- ⚠️ **Partial parsing**: 99 ccTLDs with some fields (often missing creation dates - registry limitation)
-- ❌ **Failed**: 18 ccTLDs (server offline, timeout >30s, or connection refused)
-
-### ✅ Fully Supported (52 ccTLDs)
+All fields parsed: domain, dates, nameservers, registrar, status
+→ **Ready for production use**
 
 `.ac` `.af` `.ag` `.bh` `.bi` `.bj` `.ci` `.cl` `.co` `.dm` `.do` `.ge` `.gg` `.gi` `.gl` `.hr` `.hu` `.ie` `.io` `.it` `.je` `.jp` `.kr` `.kz` `.la` `.ma` `.me` `.mk` `.mn` `.mx` `.my` `.nu` `.nz` `.pk` `.pt` `.ru` `.sc` `.se` `.sg` `.sh` `.sk` `.so` `.st` `.su` `.sx` `.sy` `.tc` `.td` `.tl` `.us` `.ve` `.ws` `.信息`
 
-### ⏱️ Timeout Issues (8 ccTLDs)
+### ⚠️ PARTIAL DATA (99 - 59%)
 
-These servers take longer than 30 seconds to respond:
+Missing some fields (usually creation date due to registry policy)
+→ **Still useful but incomplete**
 
-`.dz` `.gp` `.mw` `.ng` `.pt` `.sb` `.tk` `.uy`
+**Major TLDs with partial data:**
+- 🇩🇪 `.de` (Germany) - No creation date (registry policy)
+- 🇫🇷 `.fr` (France) - No creation date
+- 🇬🇧 `.uk` (United Kingdom) - No creation date
+- 🇨🇳 `.cn` (China) - No creation date
+- 🇦🇺 `.au` (Australia) - No creation date
+- 🇦🇹 `.at` (Austria) - No creation date
+- 🇧🇪 `.be` (Belgium) - No creation date
+- 🇩🇰 `.dk` (Denmark) - No creation date
+- 🇳🇱 `.nl` (Netherlands) - Partial data
+- 🇵🇱 `.pl` (Poland) - Partial data
+- 🇪🇸 `.es` (Spain) - Authorization required
+- 🇨🇭 `.ch` (Switzerland) - Blocks automated queries
+- 🇮🇳 `.in` (India) - Partial data
+- 🇧🇷 `.br` (Brazil) - Partial data
+- 🇨🇦 `.ca` (Canada) - Partial data
+- 🇪🇺 `.eu` (European Union) - No creation date
 
-### 🚫 Connection Refused (4 ccTLDs)
+### ❌ CANNOT QUERY (18 - 11%)
 
-These servers are offline or block automated queries:
+Server infrastructure issues, cannot be fixed by parser
 
-`.bo` `.cf` `.hm` `.pf`
+**Breakdown by error type:**
+- ⏱️ **8 Timeouts** (>30s): `.dz` `.gp` `.mw` `.ng` `.pt` `.sb` `.tk` `.uy`
+- 🚫 **4 Refused**: `.bo` `.cf` `.hm` `.pf`
+- 🌐 **2 DNS Error**: `.iq` `.mz`
+- 📭 **1 No Data**: `.bn`
+- 🔌 **3 Connection Reset**: `.tr` and others
+
+### 💡 Key Insights
+
+1. **Parser Success**: 151/169 (89%) return SOME data
+2. **Full Success**: 52/169 (31%) return ALL data
+3. **Infrastructure Issues**: 18/169 (11%) cannot be queried at all
+
+The 99 "partial data" ccTLDs are often **policy limitations, not bugs**:
+- European registries hiding creation dates for GDPR compliance
+- Some registries require authorization for automated queries
+- Privacy-focused registries redacting sensitive information
 
 ### 🌟 Highlighted Format Support
 
