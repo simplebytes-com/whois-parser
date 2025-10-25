@@ -1,0 +1,37 @@
+{
+  "name": "ccTLD-whois-parser",
+  "version": "1.0.0",
+  "description": "Comprehensive WHOIS parser with support for 169 country-code TLDs (ccTLDs)",
+  "type": "module",
+  "main": "whois-parser.js",
+  "scripts": {
+    "test": "node test-full.js",
+    "test:sample": "node test-sample.js"
+  },
+  "keywords": [
+    "whois",
+    "parser",
+    "ccTLD",
+    "domain",
+    "dns",
+    "registry",
+    "international",
+    "japan",
+    "korea",
+    "russia",
+    "europe"
+  ],
+  "author": "Simple Bytes LLC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simplebytes-com/whois-parser.git"
+  },
+  "homepage": "https://github.com/simplebytes-com/whois-parser#readme",
+  "bugs": {
+    "url": "https://github.com/simplebytes-com/whois-parser/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
