@@ -1,0 +1,79 @@
+name: Sync IANA WHOIS Servers
+
+on:
+  push:
+    branches: [ main, master ]
+  schedule:
+    # Run weekly on Sunday at 2 AM UTC to catch IANA updates
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Required to push changes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run IANA sync
+        run: npm run sync-iana
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet whois_dict.json README.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in whois_dict.json or README.md"
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add whois_dict.json README.md
+          git commit -m "chore: auto-sync IANA WHOIS servers [skip ci]
+
+          - Updated whois_dict.json from IANA Root Zone Database
+          - Updated last sync date in README.md
+          - Triggered by: ${{ github.event_name }}
+
+          Data source: https://data.iana.org/TLD/tlds-alpha-by-domain.txt"
+          git push
+
+      - name: Create backup artifact
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: whois-dict-backup-${{ github.run_number }}
+          path: whois_dict.json.backup.*
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.changes.outputs.changed }}" == "true" ]; then
+            echo "✅ WHOIS dictionary updated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Changes have been committed and pushed to the repository." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No updates needed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "WHOIS dictionary is already up-to-date with IANA." >> $GITHUB_STEP_SUMMARY
+          fi

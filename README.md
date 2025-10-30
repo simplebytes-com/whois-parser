@@ -1,6 +1,12 @@
+Last updated: 2025-10-30
+
 # WHOIS Parser for ccTLDs
 
-A comprehensive, battle-tested WHOIS parser with support for 169 country-code TLDs (ccTLDs). Built for [DomainDetails.com](https://domaindetails.com) by Simple Bytes LLC.
+A comprehensive, battle-tested WHOIS parser with support for 169 country-code TLDs (ccTLDs) and 1,260+ TLDs total. Built for [DomainDetails.com](https://domaindetails.com) by Simple Bytes LLC.
+
+## WHOIS Server Dictionary
+
+This repository includes `whois_dict.json` with WHOIS servers for **1,260+ TLDs** (updated from IANA Root Zone Database).
 
 ## Overview
 
@@ -82,6 +88,45 @@ The 99 "partial data" ccTLDs are often **policy limitations, not bugs**:
 - **Domain Fallback**: Uses input domain when WHOIS doesn't return it explicitly
 - **Robust Error Handling**: Graceful fallbacks for missing fields
 - **Comprehensive Testing**: 169 ccTLD test suite included
+
+## WHOIS Server Dictionary Maintenance
+
+The `whois_dict.json` file is automatically synced with the [IANA Root Zone Database](https://www.iana.org/domains/root/db).
+
+### Sync from IANA
+
+```bash
+# Install dependencies first
+npm install
+
+# Sync WHOIS servers from IANA (updates whois_dict.json)
+npm run sync-iana
+
+# Preview changes without saving
+npm run sync-iana:dry-run
+```
+
+The sync script:
+- Fetches complete TLD list from `https://data.iana.org/TLD/tlds-alpha-by-domain.txt` (1,439 TLDs)
+- Gets WHOIS server for each TLD from individual IANA pages
+- Updates `whois_dict.json` with sorted results
+- Creates dated backups before making changes
+- Updates README with last sync date
+
+### Automated Updates
+
+A GitHub Action automatically syncs the dictionary:
+- **On every push** to main/master branch
+- **Weekly on Sunday at 2 AM UTC** to catch IANA updates
+- **Manual trigger** via GitHub Actions UI
+
+When changes are detected, the action:
+- Updates `whois_dict.json` with new/changed TLD servers
+- Updates README with current date
+- Creates dated backups
+- Commits and pushes changes automatically
+
+See `.github/workflows/sync-iana.yml` for details.
 
 ## Installation
 

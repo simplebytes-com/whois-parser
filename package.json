@@ -6,7 +6,12 @@
   "main": "whois-parser.js",
   "scripts": {
     "test": "node test-full.js",
-    "test:sample": "node test-sample.js"
+    "test:sample": "node test-sample.js",
+    "sync-iana": "node fetch-iana-servers.js",
+    "sync-iana:dry-run": "node fetch-iana-servers.js --dry-run"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
   },
   "keywords": [
     "whois",
