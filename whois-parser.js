@@ -128,7 +128,8 @@ export function parseWhoisData(whoisText, domainName = null) {
 
     const parseMultipleFields = (field) => {
         const matches = whoisText.match(new RegExp(`${field}:\\s*(.+)`, 'ig'));
-        return matches ? matches.map(match => match.split(':')[1].trim()) : [];
+        // Use slice(1).join(':') to preserve colons in the value (e.g., URLs like https://...)
+        return matches ? matches.map(match => match.split(':').slice(1).join(':').trim()) : [];
     };
 
     // Enhanced nameserver parsing for various ccTLD formats
@@ -263,6 +264,6 @@ export function parseWhoisData(whoisText, domainName = null) {
         registrant: parseField('Registrant', ['registrant name', 'org', 'Organization']),
         status: parseStatus(),
         dnssec: parseField('DNSSEC', ['Signed', 'dnssec']),
-        lastModified: parseField('Last Modified', ['last modified', 'Last Update', 'Changed', 'changed']),
+        lastModified: parseField('Updated Date', ['Last Modified', 'last modified', 'Last Update', 'Changed', 'changed']),
     };
 }

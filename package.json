@@ -1,6 +1,6 @@
 {
-  "name": "ccTLD-whois-parser",
-  "version": "1.0.0",
+  "name": "@domaindetails/whois-parser",
+  "version": "1.0.1",
   "description": "Comprehensive WHOIS parser with support for 169 country-code TLDs (ccTLDs)",
   "type": "module",
   "main": "whois-parser.js",
