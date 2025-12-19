@@ -11,6 +11,7 @@
     "sync-iana:dry-run": "node fetch-iana-servers.js --dry-run"
   },
   "dependencies": {
+    "@domaindetails/whois-parser": "^1.0.1",
     "node-fetch": "^3.3.2"
   },
   "keywords": [
