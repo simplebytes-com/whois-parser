@@ -1,4 +1,4 @@
-Last updated: 2026-06-28
+Last updated: 2026-07-05
 
 # WHOIS Parser for ccTLDs
 
