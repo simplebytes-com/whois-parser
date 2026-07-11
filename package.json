@@ -4,6 +4,14 @@
   "description": "Comprehensive WHOIS parser with support for 169 country-code TLDs (ccTLDs)",
   "type": "module",
   "main": "whois-parser.js",
+  "files": [
+    "whois-parser.js",
+    "field-mappings.js",
+    "status-codes.js",
+    "whois_dict.json",
+    "fetch-iana-servers.js",
+    "example.js"
+  ],
   "exports": {
     ".": "./whois-parser.js",
     "./status-codes": "./status-codes.js",
