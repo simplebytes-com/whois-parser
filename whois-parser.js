@@ -6,24 +6,128 @@
  *
  * @author Simple Bytes LLC
  * @license MIT
+ * @version 1.1.0
  */
 
 import net from 'net';
+
+// ============================================================================
+// Custom Error Classes
+// ============================================================================
+
+/**
+ * Base error class for WHOIS errors
+ */
+export class WhoisError extends Error {
+    constructor(message, code, server = null) {
+        super(message);
+        this.name = 'WhoisError';
+        this.code = code;
+        this.server = server;
+    }
+}
+
+/**
+ * Error thrown when connection to WHOIS server fails
+ */
+export class ConnectionError extends WhoisError {
+    constructor(message, server) {
+        super(message, 'CONNECTION_ERROR', server);
+        this.name = 'ConnectionError';
+    }
+}
+
+/**
+ * Error thrown when WHOIS server times out
+ */
+export class TimeoutError extends WhoisError {
+    constructor(message, server, timeoutMs) {
+        super(message, 'TIMEOUT', server);
+        this.name = 'TimeoutError';
+        this.timeoutMs = timeoutMs;
+    }
+}
+
+/**
+ * Error thrown when WHOIS server returns no data
+ */
+export class NoDataError extends WhoisError {
+    constructor(message, server) {
+        super(message, 'NO_DATA', server);
+        this.name = 'NoDataError';
+    }
+}
+
+/**
+ * Error thrown for invalid input parameters
+ */
+export class ValidationError extends WhoisError {
+    constructor(message, field) {
+        super(message, 'VALIDATION_ERROR');
+        this.name = 'ValidationError';
+        this.field = field;
+    }
+}
+
+// ============================================================================
+// Input Validation
+// ============================================================================
+
+/**
+ * Validate domain name format
+ * @param {string} domain - Domain name to validate
+ * @returns {boolean} True if valid
+ */
+export function isValidDomain(domain) {
+    if (!domain || typeof domain !== 'string') return false;
+    // Basic domain validation - allows IDN and ccTLD formats
+    const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return domainRegex.test(domain) && domain.length <= 253;
+}
+
+/**
+ * Validate WHOIS server address
+ * @param {string} server - Server address to validate
+ * @returns {boolean} True if valid
+ */
+export function isValidServer(server) {
+    if (!server || typeof server !== 'string') return false;
+    // Allow hostnames and IP addresses
+    return server.length > 0 && server.length <= 253;
+}
+
+// ============================================================================
+// WHOIS Query
+// ============================================================================
 
 /**
  * Query a WHOIS server for domain information
  * @param {string} domain - Domain name to query
  * @param {string} server - WHOIS server address
- * @param {number} timeout - Timeout in milliseconds (default: 30000)
+ * @param {Object} options - Query options
+ * @param {number} options.timeout - Timeout in milliseconds (default: 30000)
  * @returns {Promise<string>} WHOIS response text
+ * @throws {ValidationError} If domain or server is invalid
+ * @throws {ConnectionError} If connection fails
+ * @throws {TimeoutError} If server times out
+ * @throws {NoDataError} If server returns no data
  */
-export function whoisQuery(domain, server, timeout = 30000) {
+export function whoisQuery(domain, server, options = {}) {
+    const timeout = typeof options === 'number' ? options : (options.timeout || 30000);
+
+    // Input validation
+    if (!domain || typeof domain !== 'string') {
+        return Promise.reject(new ValidationError('Domain name is required', 'domain'));
+    }
+    if (!server || typeof server !== 'string') {
+        return Promise.reject(new ValidationError('WHOIS server address is required', 'server'));
+    }
+
     return new Promise((resolve, reject) => {
         const socket = net.createConnection(43, server);
         let data = '';
 
         socket.on('connect', () => {
-            console.log(`Connected to WHOIS server ${server} for domain ${domain}`);
             socket.write(`${domain}\r\n`);
         });
 
@@ -33,20 +137,25 @@ export function whoisQuery(domain, server, timeout = 30000) {
 
         socket.on('end', () => {
             if (!data || data.trim().length === 0) {
-                reject(new Error(`WHOIS server ${server} returned no data`));
+                reject(new NoDataError(`WHOIS server ${server} returned no data`, server));
             } else {
                 resolve(data);
             }
         });
 
         socket.on('error', (err) => {
-            console.error(`WHOIS server error for ${server}:`, err.message);
-            reject(new Error(`WHOIS server ${server} error: ${err.message}`));
+            if (err.code === 'ECONNREFUSED') {
+                reject(new ConnectionError(`Connection refused by WHOIS server ${server}`, server));
+            } else if (err.code === 'ENOTFOUND') {
+                reject(new ConnectionError(`WHOIS server ${server} not found`, server));
+            } else {
+                reject(new ConnectionError(`WHOIS server ${server} error: ${err.message}`, server));
+            }
         });
 
         socket.setTimeout(timeout, () => {
             socket.destroy();
-            reject(new Error(`WHOIS server ${server} timed out after ${timeout / 1000} seconds`));
+            reject(new TimeoutError(`WHOIS server ${server} timed out after ${timeout / 1000} seconds`, server, timeout));
         });
     });
 }
@@ -186,7 +295,17 @@ export function parseWhoisData(whoisText, domainName = null) {
     };
 
     const parseStatus = () => {
-        // Try multi-line status format (.gg, .je)
+        // Try single-line format first (most common)
+        const singleLineMatch = parseMultipleFields('Domain Status') ||
+                               parseMultipleFields('Status') ||
+                               parseMultipleFields('state');
+
+        if (singleLineMatch && singleLineMatch.length > 0) {
+            // Return immediately if we found valid single-line status codes
+            return singleLineMatch;
+        }
+
+        // Try multi-line status format (.gg, .je) only if single-line didn't work
         const statusSection = whoisText.match(/Domain Status:\s*([\s\S]*?)(?=\n\n|Registrant:)/i);
         if (statusSection) {
             const statuses = statusSection[1]
@@ -195,12 +314,6 @@ export function parseWhoisData(whoisText, domainName = null) {
                 .filter(line => line);
             if (statuses.length > 0) return statuses;
         }
-
-        // Try single-line formats
-        const singleLineMatch = parseMultipleFields('Domain Status') ||
-                               parseMultipleFields('Status') ||
-                               parseMultipleFields('state');
-        if (singleLineMatch && singleLineMatch.length > 0) return singleLineMatch;
 
         return null;
     };
@@ -229,9 +342,18 @@ export function parseWhoisData(whoisText, domainName = null) {
     };
 
     const parseExpiryDate = () => {
+        // Check for recurring annual fee pattern first (.gg, .je domains)
+        // For these domains, expiration is handled by renewalInfo instead
+        const recurringPattern = /Registry fee due on (\d+(?:st|nd|rd|th) \w+ each year)/i;
+        const recurringMatch = whoisText.match(recurringPattern);
+        if (recurringMatch) {
+            // For domains with annual recurring fees (like .gg, .je), don't set expiration date
+            // This is handled separately in parseRenewalInfo()
+            return null;
+        }
+
         // Try various expiry date formats
         const patterns = [
-            /Registry fee due on (\d+(?:st|nd|rd|th) \w+ each year)/i,  // .gg, .je
             /paid-till:\s*(.+)/i,                                        // .ru
             /Expire Date:\s*(.+)/i,                                      // .it
             /Registry Expiry Date:\s*(.+)/i,                             // standard
@@ -252,6 +374,36 @@ export function parseWhoisData(whoisText, domainName = null) {
         return null;
     };
 
+    const parseRenewalInfo = () => {
+        // Check for recurring annual fee pattern (.gg, .je domains)
+        const recurringPattern = /Registry fee due on (\d+(?:st|nd|rd|th) \w+ each year)/i;
+        const recurringMatch = whoisText.match(recurringPattern);
+        if (recurringMatch) {
+            const rawDate = recurringMatch[1].trim();
+            // Extract day and month for annual renewal
+            const dateMatch = rawDate.match(/(\d+)(?:st|nd|rd|th)\s+(\w+)/i);
+            if (dateMatch) {
+                const [, day, month] = dateMatch;
+                return {
+                    type: 'annual_renewal',
+                    renewalDay: parseInt(day),
+                    renewalMonth: month,
+                    description: 'Registered until cancelled with annual fee'
+                };
+            }
+        }
+
+        // Check for "Registered until cancelled" status
+        if (/Registered until cancelled/i.test(whoisText)) {
+            return {
+                type: 'until_cancelled',
+                description: 'Registered until cancelled'
+            };
+        }
+
+        return null;
+    };
+
     // Try enhanced parsing for various ccTLD formats
     const parsedDomain = parseField('Domain', ['Domain Name', 'domain name', 'domain']);
 
@@ -260,6 +412,7 @@ export function parseWhoisData(whoisText, domainName = null) {
         registrar: parseField('Registrar', ['REGISTRAR', 'registrar']),
         creationDate: parseCreationDate(),
         expirationDate: parseExpiryDate(),
+        renewalInfo: parseRenewalInfo(), // For annual renewal domains (.gg, .je)
         nameservers: parseNameservers(),
         registrant: parseField('Registrant', ['registrant name', 'org', 'Organization']),
         status: parseStatus(),
