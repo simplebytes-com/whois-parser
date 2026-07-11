@@ -87,10 +87,61 @@ The 99 "partial data" ccTLDs are often **policy limitations, not bugs**:
 - **Multi-Format Parsing**: Handles colon-separated, square bracket, and multi-line formats
 - **Domain Fallback**: Uses input domain when WHOIS doesn't return it explicitly
 - **Robust Error Handling**: Custom error classes for different failure types
-- **Comprehensive Testing**: 76+ unit tests with Vitest framework
+- **Availability Detection**: `isDomainAvailable()` recognizes "not registered" responses across 20+ registry formats
+- **Rate-Limit Detection**: `isRateLimited()` distinguishes throttling/access denials (.ch, .es, .it quotas) from real data
+- **Comprehensive Testing**: 160+ unit tests with Vitest framework, fixtures for 13 registry formats
 - **Status Code Normalization**: Normalize registry status codes to EPP standard
 - **Field Mapping Dictionary**: Centralized field name aliases for extensibility
 - **Zero Runtime Dependencies**: Only uses Node.js built-in modules
+
+## What's New in v1.2.0
+
+### Line-Oriented Parsing Engine
+
+Field extraction was rewritten from free-text regex matching to line-oriented
+key/value parsing driven by the alias lists in `field-mappings.js`. This fixes
+a class of wrong-data bugs (substring false-positives, values captured from
+the wrong line) and adds support for sectioned formats: `.uk` (Nominet),
+`.it`, `.nl`, `.ee`, `.dk`, `.fi` and more. Single-line `state:` (.ru) and
+Japanese `[状態]` statuses are now parsed (previously silently dropped).
+
+### Availability & Rate-Limit Detection
+
+```javascript
+import { parseWhoisData, isDomainAvailable, isRateLimited } from '@domaindetails/whois-parser';
+
+const parsed = parseWhoisData(rawText, 'example.de');
+parsed.isAvailable;   // true when the registry says the domain is not registered
+parsed.isRateLimited; // true when the response is a quota/access denial, not data
+```
+
+Previously consumers had to maintain their own "no match" pattern lists; those
+were broad enough to misclassify real records. Detection now lives here, with
+line-anchored per-registry patterns.
+
+### New Parsed Fields
+
+`parseWhoisData()` additionally returns `registrarUrl`, `registrarIanaId`,
+`registrarWhoisServer` (referral target for thin registries),
+`abuseContactEmail`, and `registrantCountry`. When the registrant name is
+privacy-redacted, the parser now falls back to the first non-redacted
+registrant field (e.g. `Registrant Organization`).
+
+### Hardened Transport
+
+`whoisQuery()` now converts IDN domains to punycode, uses server-specific
+query formats (`whois.denic.de -T dn,ace`, `whois.jprs.jp /e` English output,
+Verisign `domain` prefix), tolerates registries that close connections
+abruptly after sending data, and caps response size (1 MiB default,
+configurable via `options.maxResponseBytes`).
+
+### Expanded Date Normalization
+
+New formats normalized to ISO 8601: `01-Dec-2023` (.uk/.ie), `12.6.2006`
+(.fi), `2002.09.19 13:00:00` (.pl), `20240304 13:11:29` (.at),
+`2025/06/01 01:05:04 (JST)` (.jp), short timezone offsets (`+03` → `+03:00`),
+and `Updated Date`/`Changed` fields are now normalized too. Unparseable
+values (e.g. .uk `before Aug-1996`) pass through unchanged.
 
 ## What's New in v1.1.0
 

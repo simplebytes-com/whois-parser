@@ -68,7 +68,8 @@ console.log(`\nTesting ${testCases.length} ccTLDs that use WHOIS${sampleOnly ? '
 const results = {
     successful: [],
     failed: [],
-    parsingIssues: []
+    parsingIssues: [],
+    accessRestricted: []
 };
 
 for (const { tld, domain } of testCases) {
@@ -81,6 +82,14 @@ for (const { tld, domain } of testCases) {
 
         // Parse the response
         const parsed = parseWhoisData(rawWhois, domain);
+
+        // Registries that deny automated port-43 access are not parsing bugs
+        if (parsed.isRateLimited) {
+            results.accessRestricted.push({ tld, domain, server });
+            console.log(`  🚫 Access restricted by registry (flagged via isRateLimited)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+        }
 
         // Check for parsing issues
         const issues = [];
@@ -123,6 +132,7 @@ for (const { tld, domain } of testCases) {
 console.log('\n========== SUMMARY ==========');
 console.log(`✅ Successful: ${results.successful.length}/${testCases.length}`);
 console.log(`⚠️  Parsing Issues: ${results.parsingIssues.length}/${testCases.length}`);
+console.log(`🚫 Access Restricted: ${results.accessRestricted.length}/${testCases.length}`);
 console.log(`❌ Failed: ${results.failed.length}/${testCases.length}`);
 
 if (results.parsingIssues.length > 0) {

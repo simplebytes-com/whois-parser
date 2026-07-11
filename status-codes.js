@@ -44,7 +44,6 @@ export const EPP_STATUS_CODES = {
 
     // Redemption
     redemptionPeriod: 'redemptionPeriod',
-    pendingRestore: 'pendingRestore',
 
     // Other
     inactive: 'inactive',
@@ -84,6 +83,13 @@ const STATUS_MAPPINGS = {
     'connect': 'ok',
     'free': 'inactive',
 
+    // Estonian format
+    'ok (paid and in zone)': 'ok',
+    'expired': 'inactive',
+
+    // Dutch format
+    'in quarantine': 'redemptionPeriod',
+
     // Delete/inactive variations
     'inactive': 'inactive',
     'Inactive': 'inactive',
@@ -121,8 +127,10 @@ export function normalizeStatus(status) {
         return STATUS_MAPPINGS[trimmed];
     }
 
-    // Check if it's an EPP status code with URL (e.g., "clientDeleteProhibited https://icann.org/epp#clientDeleteProhibited")
-    const eppMatch = trimmed.match(/^(\w+)\s+https?:\/\//i);
+    // Check if it's an EPP status code with URL, with or without parentheses:
+    // "clientDeleteProhibited https://icann.org/epp#clientDeleteProhibited"
+    // "clientDeleteProhibited (https://www.icann.org/epp#clientDeleteProhibited)"
+    const eppMatch = trimmed.match(/^(\w+)\s*\(?\s*https?:\/\//i);
     if (eppMatch) {
         const code = eppMatch[1];
         // Check if it's a known EPP code
@@ -135,10 +143,11 @@ export function normalizeStatus(status) {
         }
     }
 
-    // Check for case-insensitive match in EPP codes
-    const lowerStatus = trimmed.toLowerCase();
+    // Check for case/separator-insensitive match in EPP codes:
+    // "CLIENT TRANSFER PROHIBITED", "client-transfer-prohibited", "clienttransferprohibited"
+    const compact = trimmed.toLowerCase().replace(/[\s_-]+/g, '');
     for (const [key, value] of Object.entries(EPP_STATUS_CODES)) {
-        if (key.toLowerCase() === lowerStatus) {
+        if (key.toLowerCase() === compact) {
             return value;
         }
     }

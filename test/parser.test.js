@@ -43,8 +43,7 @@ describe('parseWhoisData', () => {
             expect(result.expirationDate).toBe('2026-05-31T00:00:00Z');
         });
 
-        // TODO: Phase 2 - Add support for Japanese status field [状態]
-        it.skip('should parse status (needs Japanese field support)', () => {
+        it('should parse status from Japanese field [状態]', () => {
             expect(result.status).toContain('Active');
         });
     });
@@ -158,8 +157,7 @@ describe('parseWhoisData', () => {
             expect(result.nameservers.join(' ')).not.toContain('213.180.193.1');
         });
 
-        // TODO: Phase 2 - Add support for Russian 'state:' field
-        it.skip('should parse status from state field (needs state: support)', () => {
+        it('should parse status from state field', () => {
             expect(result.status).toContain('REGISTERED, DELEGATED, VERIFIED');
         });
 
@@ -212,10 +210,26 @@ describe('parseWhoisData', () => {
             expect(result.dnssec).toBe('unsigned');
         });
 
-        // Registrant Name takes precedence over Organization in standard format
-        // TODO: Phase 2 - Check Organization when Registrant is REDACTED
-        it('should parse registrant (currently returns REDACTED)', () => {
-            expect(result.registrant).toBe('REDACTED FOR PRIVACY');
+        // When Registrant Name is redacted, fall back to the first
+        // non-redacted registrant field (here: Registrant Organization)
+        it('should fall back to Organization when Registrant Name is REDACTED', () => {
+            expect(result.registrant).toBe('Meeting.io, Inc.');
+        });
+
+        it('should parse registrar URL, IANA ID, WHOIS server and abuse email', () => {
+            expect(result.registrarUrl).toBe('http://www.uniregistry.com');
+            expect(result.registrarIanaId).toBe('1659');
+            expect(result.registrarWhoisServer).toBe('whois.uniregistrar.net');
+            expect(result.abuseContactEmail).toBe('abuse@uniregistry.com');
+        });
+
+        it('should parse registrant country', () => {
+            expect(result.registrantCountry).toBe('US');
+        });
+
+        it('should not report a registered domain as available', () => {
+            expect(result.isAvailable).toBe(false);
+            expect(result.isRateLimited).toBe(false);
         });
     });
 

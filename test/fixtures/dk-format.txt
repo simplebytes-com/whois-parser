@@ -1,0 +1,28 @@
+# Hello 1.2.3.4. Your session has been logged.
+#
+# Copyright (c) 2002 - 2025 by DK Hostmaster A/S
+#
+# The data in the DK Whois database is provided by DK Hostmaster A/S
+
+Domain:               google.dk
+DNS:                  google.dk
+Registered:           1999-01-10
+Expires:              2026-03-31
+Registration period:  5 years
+VID:                  no
+DNSSEC:               Unsigned delegation
+Status:               Active
+
+Registrant
+Handle:               ***N/A***
+Name:                 Google LLC
+Address:              1600 Amphitheatre Parkway
+Postalcode:           94043
+City:                 Mountain View
+Country:              US
+
+Nameservers
+Hostname:             ns1.google.com
+Hostname:             ns2.google.com
+Hostname:             ns3.google.com
+Hostname:             ns4.google.com
