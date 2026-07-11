@@ -1,0 +1,2 @@
+Domain: thisdomaindoesnotexist-xyz.de
+Status: free

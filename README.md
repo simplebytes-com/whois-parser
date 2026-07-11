@@ -86,8 +86,119 @@ The 99 "partial data" ccTLDs are often **policy limitations, not bugs**:
 - **Date Normalization**: Converts all date formats to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`)
 - **Multi-Format Parsing**: Handles colon-separated, square bracket, and multi-line formats
 - **Domain Fallback**: Uses input domain when WHOIS doesn't return it explicitly
-- **Robust Error Handling**: Graceful fallbacks for missing fields
-- **Comprehensive Testing**: 169 ccTLD test suite included
+- **Robust Error Handling**: Custom error classes for different failure types
+- **Availability Detection**: `isDomainAvailable()` recognizes "not registered" responses across 20+ registry formats
+- **Rate-Limit Detection**: `isRateLimited()` distinguishes throttling/access denials (.ch, .es, .it quotas) from real data
+- **Comprehensive Testing**: 160+ unit tests with Vitest framework, fixtures for 13 registry formats
+- **Status Code Normalization**: Normalize registry status codes to EPP standard
+- **Field Mapping Dictionary**: Centralized field name aliases for extensibility
+- **Zero Runtime Dependencies**: Only uses Node.js built-in modules
+
+## What's New in v1.2.0
+
+### Line-Oriented Parsing Engine
+
+Field extraction was rewritten from free-text regex matching to line-oriented
+key/value parsing driven by the alias lists in `field-mappings.js`. This fixes
+a class of wrong-data bugs (substring false-positives, values captured from
+the wrong line) and adds support for sectioned formats: `.uk` (Nominet),
+`.it`, `.nl`, `.ee`, `.dk`, `.fi` and more. Single-line `state:` (.ru) and
+Japanese `[状態]` statuses are now parsed (previously silently dropped).
+
+### Availability & Rate-Limit Detection
+
+```javascript
+import { parseWhoisData, isDomainAvailable, isRateLimited } from '@domaindetails/whois-parser';
+
+const parsed = parseWhoisData(rawText, 'example.de');
+parsed.isAvailable;   // true when the registry says the domain is not registered
+parsed.isRateLimited; // true when the response is a quota/access denial, not data
+```
+
+Previously consumers had to maintain their own "no match" pattern lists; those
+were broad enough to misclassify real records. Detection now lives here, with
+line-anchored per-registry patterns.
+
+### New Parsed Fields
+
+`parseWhoisData()` additionally returns `registrarUrl`, `registrarIanaId`,
+`registrarWhoisServer` (referral target for thin registries),
+`abuseContactEmail`, and `registrantCountry`. When the registrant name is
+privacy-redacted, the parser now falls back to the first non-redacted
+registrant field (e.g. `Registrant Organization`).
+
+### Hardened Transport
+
+`whoisQuery()` now converts IDN domains to punycode, uses server-specific
+query formats (`whois.denic.de -T dn,ace`, `whois.jprs.jp /e` English output,
+Verisign `domain` prefix), tolerates registries that close connections
+abruptly after sending data, and caps response size (1 MiB default,
+configurable via `options.maxResponseBytes`).
+
+### Expanded Date Normalization
+
+New formats normalized to ISO 8601: `01-Dec-2023` (.uk/.ie), `12.6.2006`
+(.fi), `2002.09.19 13:00:00` (.pl), `20240304 13:11:29` (.at),
+`2025/06/01 01:05:04 (JST)` (.jp), short timezone offsets (`+03` → `+03:00`),
+and `Updated Date`/`Changed` fields are now normalized too. Unparseable
+values (e.g. .uk `before Aug-1996`) pass through unchanged.
+
+## What's New in v1.1.0
+
+### Custom Error Classes
+
+Handle different error types programmatically:
+
+```javascript
+import {
+    whoisQuery,
+    ConnectionError,
+    TimeoutError,
+    NoDataError,
+    ValidationError,
+} from '@domaindetails/whois-parser';
+
+try {
+    const result = await whoisQuery('google.jp', 'whois.jprs.jp');
+} catch (error) {
+    if (error instanceof TimeoutError) {
+        console.log(`Server timed out after ${error.timeoutMs}ms`);
+    } else if (error instanceof ConnectionError) {
+        console.log(`Connection failed to ${error.server}`);
+    } else if (error instanceof ValidationError) {
+        console.log(`Invalid ${error.field}`);
+    }
+}
+```
+
+### Status Code Normalization
+
+Normalize different registry status formats to standard EPP codes:
+
+```javascript
+import { normalizeStatus, isActive, hasTransferLock } from '@domaindetails/whois-parser/status-codes';
+
+// Normalize various formats to EPP codes
+normalizeStatus('active');           // → 'ok'
+normalizeStatus('REGISTERED, DELEGATED'); // → 'ok'
+normalizeStatus('locked');           // → 'clientTransferProhibited'
+
+// Check domain status
+isActive(['ok', 'clientTransferProhibited']);  // → true
+hasTransferLock(['clientTransferProhibited']); // → true
+```
+
+### Field Mappings
+
+Access the centralized field name aliases:
+
+```javascript
+import { NAMESERVER_FIELDS, getFieldAliases } from '@domaindetails/whois-parser/field-mappings';
+
+// Get all aliases for nameserver fields
+console.log(getFieldAliases('nameserver'));
+// ['Name Server', 'Nameserver', 'nserver', 'Host Name', '호스트이름', ...]
+```
 
 ## WHOIS Server Dictionary Maintenance
 
@@ -131,13 +242,13 @@ See `.github/workflows/sync-iana.yml` for details.
 ## Installation
 
 ```bash
-npm install
+npm install @domaindetails/whois-parser
 ```
 
 ## Usage
 
 ```javascript
-import { parseWhoisData, whoisQuery } from './whois-parser.js';
+import { parseWhoisData, whoisQuery } from '@domaindetails/whois-parser';
 
 // Query a WHOIS server
 const whoisText = await whoisQuery('google.jp', 'whois.jprs.jp');
@@ -249,6 +360,24 @@ Found a ccTLD that doesn't parse correctly? We'd love a PR!
 3. Identify the unique format patterns
 4. Update `parseWhoisData()` with new patterns
 5. Re-run tests to verify
+
+## Comparison with Other Packages
+
+| Feature | @domaindetails/whois-parser | whoiser | whois | whois-parsed |
+|---------|----------------------------|---------|-------|--------------|
+| **ccTLD Coverage** | 169 TLDs tested | Basic | Basic | Basic |
+| **Date Format Support** | 24+ formats | Basic | None | Basic |
+| **Japanese/Korean/Russian** | Full support | Limited | None | Limited |
+| **Custom Error Classes** | Yes | No | No | No |
+| **Status Normalization** | EPP codes | No | No | No |
+| **Field Mappings** | Extensible | No | No | Hardcoded |
+| **Zero Runtime Deps** | Yes | No | No | No |
+| **Test Coverage** | 76+ tests | Good | Good | Poor |
+| **Active Maintenance** | Yes | Yes | Yes | Stale (3yr) |
+| **SOCKS Proxy** | No | No | Yes | Yes |
+| **Auto TLD Discovery** | Via dictionary | Yes | No | No |
+
+**Our differentiator**: Best-in-class ccTLD WHOIS parsing with comprehensive international format support, custom error handling, and zero runtime dependencies.
 
 ## Credits
 

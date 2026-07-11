@@ -1,0 +1,6 @@
+domain:         google.at
+registrar:      MarkMonitor Inc. ( https://markmonitor.com )
+nserver:        ns1.google.com
+nserver:        ns2.google.com
+changed:        20240304 13:11:29
+source:         AT-DOM

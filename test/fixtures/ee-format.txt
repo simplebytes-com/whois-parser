@@ -1,0 +1,31 @@
+Estonia .ee Top Level Domain WHOIS server
+
+Domain:
+name:       google.ee
+status:     ok (paid and in zone)
+registered: 2010-07-04 06:26:24 +03:00
+changed:    2024-06-25 09:15:20 +03:00
+expire:     2025-07-04
+outzone:
+delete:
+
+Registrant:
+name:       Google LLC
+org id:     3582691
+country:    US
+email:      Not Disclosed - Visit www.internet.ee for webbased WHOIS
+changed:    Not Disclosed
+
+Registrar:
+name:       Zone Media OÜ
+url:        http://www.zone.ee
+phone:      +372 6886886
+changed:    2019-05-29 12:00:00 +03:00
+
+Name servers:
+nserver:   ns1.google.com
+nserver:   ns2.google.com
+changed:   2019-06-13 12:04:29 +03:00
+
+Estonia .ee Top Level Domain WHOIS server
+More information at http://internet.ee

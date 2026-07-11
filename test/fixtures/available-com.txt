@@ -1,0 +1,2 @@
+No match for domain "THISDOMAINDOESNOTEXIST-XYZ.COM".
+>>> Last update of whois database: 2025-12-19T10:47:02Z <<<

@@ -1,0 +1,24 @@
+Domain name: google.nl
+Status:      active
+
+Registrar:
+   MarkMonitor Inc.
+   3540 East Longwing Lane
+   Meridian ID 83646
+   United States of America
+
+Abuse Contact:
+
+DNSSEC:      no
+
+Domain nameservers:
+   ns1.google.com
+   ns2.google.com
+   ns3.google.com
+   ns4.google.com
+
+Creation Date: 1999-05-27
+
+Updated Date: 2015-12-01
+
+Record maintained by: SIDN BV

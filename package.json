@@ -1,17 +1,26 @@
 {
   "name": "@domaindetails/whois-parser",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "Comprehensive WHOIS parser with support for 169 country-code TLDs (ccTLDs)",
   "type": "module",
   "main": "whois-parser.js",
+  "exports": {
+    ".": "./whois-parser.js",
+    "./status-codes": "./status-codes.js",
+    "./field-mappings": "./field-mappings.js"
+  },
   "scripts": {
-    "test": "node test-full.js",
-    "test:sample": "node test-sample.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:live": "node test-live.js",
+    "test:sample": "node test-live.js --sample",
     "sync-iana": "node fetch-iana-servers.js",
     "sync-iana:dry-run": "node fetch-iana-servers.js --dry-run"
   },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
+  "dependencies": {},
+  "devDependencies": {
+    "vitest": "^2.1.0"
   },
   "keywords": [
     "whois",

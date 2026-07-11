@@ -1,0 +1,27 @@
+    Domain name:
+        bbc.co.uk
+
+    Data validation:
+        Nominet was able to match the registrant's name and address against a 3rd party data source on 10-Dec-2014
+
+    Registrar:
+        British Broadcasting Corporation [Tag = BBC]
+        URL: http://www.bbc.co.uk
+
+    Relevant dates:
+        Registered on: before Aug-1996
+        Expiry date:  13-Dec-2025
+        Last updated:  10-Dec-2024
+
+    Registration status:
+        Registered until expiry date.
+
+    Name servers:
+        ddns0.bbc.co.uk       148.163.199.1
+        ddns1.bbc.com
+
+    WHOIS lookup made at 10:35:59 22-Oct-2025
+
+--
+This WHOIS information is provided for free by Nominet UK the central registry
+for .uk domain names.

@@ -1,0 +1,43 @@
+query : naver.kr
+
+
+# KOREAN(UTF8)
+
+도메인이름                  : naver.kr
+등록인                      : 네이버(주)
+책임자                      : 기술팀
+책임자 전자우편             : domain@navercorp.com
+책임자 전화번호             : +82.31.784.1900
+등록일                      : 2007. 03. 02.
+최근 정보 변경일            : 2023. 01. 15.
+사용 종료일                 : 2028. 03. 02.
+정보공개여부                : Y
+등록대행자                  : (주)가비아(http://www.gabia.com)
+DNSSEC                      : 미서명
+
+1차 네임서버 정보
+   호스트이름               : ns1.naver.com
+
+2차 네임서버 정보
+   호스트이름               : ns2.naver.com
+
+
+# ENGLISH
+
+Domain Name                 : naver.kr
+Registrant                  : NAVER Corp.
+Administrative Contact(AC)  : Tech Team
+AC E-Mail                   : domain@navercorp.com
+AC Phone Number             : +82.31.784.1900
+Registered Date             : 2007. 03. 02.
+Last Updated Date           : 2023. 01. 15.
+Expiration Date             : 2028. 03. 02.
+Publishes                   : Y
+Authorized Agency           : Gabia, Inc.(http://www.gabia.com)
+DNSSEC                      : unsigned
+
+Primary Name Server
+   Host Name                : ns1.naver.com
+
+Secondary Name Server
+   Host Name                : ns2.naver.com
